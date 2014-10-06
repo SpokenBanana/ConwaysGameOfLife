@@ -1,4 +1,3 @@
-import oracle.jrockit.jfr.JFR;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -11,6 +10,11 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
+
+/*
+    This is where the logic for the GUI is at. It uses GCL.java for its JPanel.
+    It uses the methods in GCL to manipulate the simulation.
+ */
 public class CGLGUI extends JFrame implements ChangeListener, KeyListener, ActionListener{
     public static void main(String[] args) {
         CGLGUI g = new CGLGUI();
@@ -22,9 +26,9 @@ public class CGLGUI extends JFrame implements ChangeListener, KeyListener, Actio
         c = new CGL();
         JPanel controls = new JPanel();
         controls.add(new JLabel("CellSize"));
-        controls.add(creatSliderFor("slider", 1, 20, 9, 10));
+        controls.add(createSliderFor("slider", 1, 20, 9, 10));
         controls.add(new JLabel("Frame Rate"));
-        controls.add(creatSliderFor("framerate", 0, 30, 10, 1000/150));
+        controls.add(createSliderFor("framerate", 0, 30, 10, 10));
         controls.add(createButton("blackColor", "Set background color"));
         controls.add(createButton("whiteColor", "Set cell color"));
         this.add(c, BorderLayout.CENTER);
@@ -37,7 +41,7 @@ public class CGLGUI extends JFrame implements ChangeListener, KeyListener, Actio
         try {
             if (!getBoardFile())
                 c.setBoard(ImageIO.read(this.getClass().getResource("third.png")));
-            getNewSize();
+            resizeFrame();
         } catch (Exception e) { System.exit(0); }
         this.setLocationRelativeTo(null);
         this.setVisible(true);
@@ -49,7 +53,7 @@ public class CGLGUI extends JFrame implements ChangeListener, KeyListener, Actio
         b.addActionListener(this);
         return b;
     }
-    private JSlider creatSliderFor(String name, int min, int max, int intervals, int value) {
+    private JSlider createSliderFor(String name, int min, int max, int intervals, int value) {
         JSlider slider = new JSlider(JSlider.HORIZONTAL, min, max, value);
         slider.setName(name);
         slider.addChangeListener(this);
@@ -64,15 +68,15 @@ public class CGLGUI extends JFrame implements ChangeListener, KeyListener, Actio
     public void stateChanged(ChangeEvent e) {
         JSlider source = (JSlider) e.getSource();
         String name = source.getName();
-        if (name.equals("slider")) {
-            if (!source.getValueIsAdjusting()) {
-                c.setCellSize(source.getValue());
-                getNewSize();
-            }
+        if (name.equals("slider") && !source.getValueIsAdjusting()) {
+            c.setCellSize(source.getValue());
+            resizeFrame();
         }
-        else if (name.equals("framerate"))
+        else if (name.equals("framerate")){
             if (!source.getValueIsAdjusting())
                 c.frameRate = source.getValue();
+
+        }
     }
     public boolean getBoardFile() {
         BufferedImage b;
@@ -90,7 +94,7 @@ public class CGLGUI extends JFrame implements ChangeListener, KeyListener, Actio
         } catch (Exception ex) { System.exit(0); }
         return true;
     }
-    private void getNewSize() {
+    private void resizeFrame() {
         this.revalidate();
         this.repaint();
         this.pack();
@@ -100,7 +104,7 @@ public class CGLGUI extends JFrame implements ChangeListener, KeyListener, Actio
     public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ENTER) {
             getBoardFile();
-            getNewSize();
+            resizeFrame();
         }
     }
     private Color getColorForBoard(Color c) {
@@ -113,11 +117,11 @@ public class CGLGUI extends JFrame implements ChangeListener, KeyListener, Actio
     public void actionPerformed(ActionEvent e) {
         String name = ((JButton)e.getSource()).getName();
         int oldframe = c.frameRate;
-        c.frameRate = 0;
+        c.frameRate = 0; // pause the simulation while they are picking a color
         if (name.equals("blackColor"))
-            c.black = getColorForBoard(c.black);
+            c.DEAD_COLOR = getColorForBoard(c.DEAD_COLOR);
         else if (name.equals("whiteColor"))
-            c.white = getColorForBoard(c.white);
-        c.frameRate = oldframe;
+            c.LIVE_COLOR = getColorForBoard(c.LIVE_COLOR);
+        c.frameRate = oldframe; // restore the frame rate (or resume the game) once they have picked a color
     }
 }
